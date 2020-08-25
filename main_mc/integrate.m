@@ -420,7 +420,7 @@ for indt = 1:ntime
       ka_P 	      = A_P * ECOL.eff_a .* STRU.minf_4d_p_bm1_P_vec;                      %  A * eff_a .* minf_4d.^(b_allo-1) (s-1)
       en_input_vb = A_P .* STRU.fmass_4d_p_b_P_vec - ka_P .* STRU.fmass_4d_vec;              % A .* fmass_4d.^b_allo - ka .* fmass_4d;
       
-      temp_dep_m = temp_dep_m_p;
+      temp_dep_m = temp_dep_m_P;
   end
   
   %---------------------------------------------------------------------------------------
@@ -463,7 +463,7 @@ for indt = 1:ntime
         nansum( STRU.rep_alloc_frac_vec(:,4:6,:) .* en_input(:,4:6,:) .* squeeze(dfish(:,4:6,:)) .* STRU.delfm_4d_over_fmass_4d_vec(:,4:6,:),3) / STRU.delfm_4d_vec(1,4,1);
   else
       flux_in_num_eggs = (ECOL.frac_fem/ECOL.m_egg) .* ...
-        nansum( STRU.rep_alloc_frac_vec .* en_input .* squeeze(dfish) .* STRU.delfm_4d_over_fmass_4d_vec,4) / STRU.delfm_4d_vec(1,1,1);
+        nansum( STRU.rep_alloc_frac_vec .* en_input .* squeeze(dfish) .* STRU.delfm_4d_over_fmass_4d_vec,3) / STRU.delfm_4d_vec(1,1,1);
   end
   %---------------------------------------------------------------------------------------
   % Boundary condition based on recruitment (production and survival of eggs)
