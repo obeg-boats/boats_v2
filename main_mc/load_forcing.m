@@ -32,7 +32,7 @@ forcing.surf=Ecological.surface;
 
 %--------------------------------- 
 % Forcing economical
-if strcmp(boats.param.main.sim_type,'h')
+if (strcmp(boats.param.main.sim_type,'hd')||strcmp(boats.param.main.sim_type,'hf'))
     if exist(forcing_economical,'file')
         load(forcing_economical);
     else
