@@ -120,7 +120,7 @@ function boats = integrate(boats)
  %--------------------------------------------------------------------------------------------------------------
  % Defines fileds for Economics simulations
  %--------------------------------------------------------------------------------------------------------------
- if strcmp(MAIN.sim_type,'h')
+ if (strcmp(MAIN.sim_type,'hd')||strcmp(MAIN.sim_type,'hf'))
 
    %-----------------------------------------------------------------------------------------
    % Initialize economics arrays
@@ -169,8 +169,8 @@ function boats = integrate(boats)
     switch outmode.modes{indm}
     case 'all'
        % NOTE: For output every timestep, no checks/averaging required
-       odt = (30*sperd) /dtts; 
-       oendt = time(end)/dtts;
+       odt = (30*CONV.sperd) /MAIN.dtts; 
+       oendt = time(end)/MAIN.dtts;
        outmode.(tmode).it_bounds = [ [1:odt:oendt]' [odt:odt:oendt]'];
     case 'annual'
        % BOATS assumption is 12 months of 30 days 
@@ -278,6 +278,22 @@ function boats = integrate(boats)
           % Saves the variable after integral over size dimensions
              outmode.(outmode.modes{indm}).(outmode.(outmode.modes{indm}).var_outn{indv}) = ...
                                            zeros(ontime,FORC.nlat,FORC.nlon,nfish);
+          case 'si100'
+          % Saves the variable after integral over size dimensions
+             outmode.(outmode.modes{indm}).(outmode.(outmode.modes{indm}).var_outn{indv}) = ...
+                                           zeros(ontime,FORC.nlat,FORC.nlon,nfish);
+          case 'si1000'
+          % Saves the variable after integral over size dimensions
+             outmode.(outmode.modes{indm}).(outmode.(outmode.modes{indm}).var_outn{indv}) = ...
+                                           zeros(ontime,FORC.nlat,FORC.nlon,nfish);
+          case 'si10000'
+          % Saves the variable after integral over size dimensions
+             outmode.(outmode.modes{indm}).(outmode.(outmode.modes{indm}).var_outn{indv}) = ...
+                                           zeros(ontime,FORC.nlat,FORC.nlon,nfish);
+          case 'si100000'
+          % Saves the variable after integral over size dimensions
+             outmode.(outmode.modes{indm}).(outmode.(outmode.modes{indm}).var_outn{indv}) = ...
+                                           zeros(ontime,FORC.nlat,FORC.nlon,nfish);
           case '2di_si'
           % Saves the variable after integral over size dimensions and over 2D domain
              outmode.(outmode.modes{indm}).(outmode.(outmode.modes{indm}).var_outn{indv}) = ...
@@ -329,7 +345,6 @@ function boats = integrate(boats)
 % MAIN LOOP
 %--------------------------------------------------------------------------------------------------------------
 %--------------------------------------------------------------------------------------------------------------
-
 for indt = 1:ntime
 
   % local month
@@ -375,12 +390,17 @@ for indt = 1:ntime
   % Optimized code by using "bsxfun" instead of repmat
 
   if (ECOL.pelagic)&&(ECOL.demersal)
+%       en_input_P(:,1:3,:) = repmat(npp./mphyto,[1 ECOL.nfish ECOL.nfmass]) .* ...
+%                             STRU.fmass_4d_vec(:,1:3,:).^(repmat(INIT.tro_sca(:,1),[1 ECOL.nfish ECOL.nfmass])-1)    ./ repmat(mphyto.^(INIT.tro_sca(:,1)-1) ,[1 ECOL.nfish ECOL.nfmass]) .* ...
+%                             STRU.fmass_4d_vec(:,1:3,:) ./ squeeze(dfish(:,1:3,:) + CONV.epsln) * part_PP_g;
+
       en_input_P(:,1:3,:) = bsxfun(@times,npp./mphyto, ...
                    (bsxfun(@rdivide,STRU.fmass_4d_vec(:,1:3,:).^(repmat(INIT.tro_sca(:,1),[1 ECOL.nfish ECOL.nfmass])-1),repmat(mphyto.^(INIT.tro_sca(:,1)-1),[1 ECOL.nfish ECOL.nfmass])) .* ... 
                    STRU.fmass_4d_vec(:,1:3,:) ./ squeeze(dfish(:,1:3,:) + CONV.epsln) * part_PP_g));
       en_input_P(:,4:6,:) = bsxfun(@times,pfb./mbentho, ...
                    (bsxfun(@rdivide,STRU.fmass_4d_vec(:,4:6,:).^(repmat(INIT.tro_sca(:,2),[1 ECOL.nfish ECOL.nfmass])-1),repmat(mbentho.^(INIT.tro_sca(1,2)-1),[size(pfb,1) ECOL.nfish ECOL.nfmass])) .* ... 
                    STRU.fmass_4d_vec(:,4:6,:) ./ squeeze(dfish(:,4:6,:) + CONV.epsln) * part_PP_g));
+
 %       en_input_P(:,1:3,:) = bsxfun(@times,npp./mphyto, ...
 %                    (STRU.fmass_4d_vec(:,1:3,:)./repmat(mphyto,[1 ECOL.nfish ECOL.nfmass])).^(repmat(INIT.tro_sca(:,1),[1 ECOL.nfish ECOL.nfmass])-1) .* ... 
 %                    STRU.fmass_4d_vec(:,1:3,:) ./ squeeze(dfish(:,1:3,:) + CONV.epsln) * part_PP_g);
@@ -411,7 +431,7 @@ for indt = 1:ntime
       temp_dep_m = cat(2,temp_dep_m_P,temp_dep_m_D);
   else
       temp_dep_A_P  = repmat(exp( (-ENVI.E_activation_A(1)/ENVI.k_Boltzmann) .* (1./temp_fish_pel_A - 1/ENVI.temp_ref_A)),[1 ECOL.nfish ECOL.nfmass]);
-      temp_dep_m_P  = repmat(exp( (-ENVI.E_activation_m(2)/ENVI.k_Boltzmann) .* (1./temp_fish_pel_m - 1/ENVI.temp_ref_A)),[1 ECOL.nfish ECOL.nfmass]);
+      temp_dep_m_P  = repmat(exp( (-ENVI.E_activation_m(1)/ENVI.k_Boltzmann) .* (1./temp_fish_pel_m - 1/ENVI.temp_ref_A)),[1 ECOL.nfish ECOL.nfmass]);
       A_P 	      = A0(1) .* temp_dep_A_P;
       ka_P 	      = A_P * ECOL.eff_a .* STRU.minf_4d_p_bm1_P_vec;                      %  A * eff_a .* minf_4d.^(b_allo-1) (s-1)
       en_input_vb = A_P .* STRU.fmass_4d_p_b_P_vec - ka_P .* STRU.fmass_4d_vec;              % A .* fmass_4d.^b_allo - ka .* fmass_4d;
@@ -448,7 +468,7 @@ for indt = 1:ntime
       flux_in_P(:,1:3) = part_PP_b * (repmat(npp./mphyto,[1 ECOL.nfish])) .* (STRU.fmass_bc./repmat(mphyto,[1 ECOL.nfish])).^(repmat(INIT.tro_sca(:,1),[1 ECOL.nfish])-1) * STRU.fmass_bc / STRU.delfm_4d_vec(1,1,1);
       flux_in_P(:,4:6) = part_PP_b * (repmat(pfb./mbentho,[1 ECOL.nfish])) .* (STRU.fmass_bc./repmat(mbentho,[size(pfb,1) ECOL.nfish])).^(repmat(INIT.tro_sca(:,2),[1 ECOL.nfish])-1) * STRU.fmass_bc / STRU.delfm_4d_vec(1,4,1);
   else
-      flux_in_P = part_PP_b * (repmat(npp./mphyto,[1 ECOL.nfish])) .* (STRU.fmass_bc./repmat(mphyto,[1 ECOL.nfish])).^(INIT.tro_sca(1)-1) * STRU.fmass_bc / STRU.delfm_4d_vec(1,1,1);
+      flux_in_P = part_PP_b * (repmat(npp./mphyto,[1 ECOL.nfish])) .* (STRU.fmass_bc./repmat(mphyto,[1 ECOL.nfish])).^(repmat(INIT.tro_sca(:),[1 ECOL.nfish])-1) * STRU.fmass_bc / STRU.delfm_4d_vec(1,1,1);
   end
   %---------------------------------------------------------------------------------------
   % Flux in of number of eggs produced
@@ -477,7 +497,7 @@ for indt = 1:ntime
   %---------------------------------------------------------------------------------------
   % Boundary condition (Beverton-Holt form)
   flux_in(:,:,1) = flux_in_P .* ((flux_in_rep + CONV.epsln) ./ (flux_in_P + flux_in_rep + CONV.epsln));
-  
+    
   %---------------------------------------------------------------------------------------
   % Flux in of other mass classes
   flux_in(:,:,2:end) = gamma(:,:,1:end-1) .* squeeze(dfish(:,:,1:end-1)) ./ STRU.delfm_2end_4d_vec;
@@ -522,7 +542,7 @@ for indt = 1:ntime
     mask_dfish_neg = (squeeze(dfish) < 0);
     dfish(mask_dfish_neg)  = 0;
      
-  else % Economic harvesting
+  elseif strcmp(MAIN.sim_type,'hd')  % Economic harvesting
      
     %-------------------------------------------------------------------------------------
     % Update fish to calculate harvest
@@ -630,7 +650,58 @@ for indt = 1:ntime
     effort = squeeze(effort) + effort_change * MAIN.dtts;
     mask_effort_neg = (squeeze(effort) < 0);
     effort(mask_effort_neg)  = 0;
-    
+
+  elseif strcmp(MAIN.sim_type,'hf')  % Economic harvesting
+
+    %-------------------------------------------------------------------------------------
+    % Update fish to calculate harvest
+    %-------------------------------------------------------------------------------------
+    dfish_temp  = squeeze(dfish) + ( flux_in - flux_out + flux_fish_growth - mortality ) * MAIN.dtts;
+    mask_dfish_temp_neg = (squeeze(dfish_temp) < 0);
+    dfish_temp(mask_dfish_temp_neg)  = 0;
+
+    %-------------------------------------------------------------------------------------
+    % Catchability
+    %-------------------------------------------------------------------------------------
+    if (time(indt) < ECON.harvest_start*CONV.spery)
+        % Catchability zero before start year (adjusted for dharvest calculation)
+        if (ECOL.pelagic)&&(ECOL.demersal)
+            qcatch = 0 * ones(1,2*ECOL.nfish);
+        else
+            qcatch = 0 * ones(1,ECOL.nfish);
+        end
+    else
+        % Set catchability forcing scenario (adjusted for dharvest calculation)
+        catchability_used(1,indt) = FORC.catchability(indt);
+        if (ECOL.pelagic)&&(ECOL.demersal)
+            qcatch = FORC.catchability(indt) * ones(1,2*ECOL.nfish);
+        else
+            qcatch = FORC.catchability(indt) * ones(1,ECOL.nfish);
+        end
+    end
+
+    %-------------------------------------------------------------------------------------
+    % dharvest [nlat,nlon,nfish,nfmass]
+    %-------------------------------------------------------------------------------------
+    % qcatch * effort * selectivity * dfish_temp
+    % Set upper limit (min) so that no more than the fish present can be caught (dfish_temp/dtts)
+    %-------------------------------------------------------------------------------------
+%   % Original code - changed to optimize calculation
+%   dharvest = min(squeeze(dfish_temp)/dtts, permute(repmat(qcatch(:),[1 nlat nlon nfmass]),[2 3 1 4]) .* ...
+%              repmat(squeeze(effort+epsln),[1 1 1 nfmass]) .* selectivity_4d .* squeeze(dfish_temp));
+    % Optimized code by using "bsxfun" instead of repmat
+    dharvest = min(squeeze(dfish_temp)/MAIN.dtts, ...
+               bsxfun(@times,bsxfun(@times,permute(qcatch(:),[2 1]),squeeze(effort+CONV.epsln)), ...
+               STRU.selectivity_4d_vec .* squeeze(dfish_temp)));
+
+    mask_dharvest_neg = (squeeze(dharvest) < 0);
+    dharvest(mask_dharvest_neg)  = 0;
+
+    %-------------------------------------------------------------------------------------
+    dfish  = squeeze(dfish_temp) - squeeze(dharvest) * MAIN.dtts;
+    mask_dfish_neg = (squeeze(dfish) < 0);
+    dfish(mask_dfish_neg)  = 0;
+
   end % end integrate
   
   
@@ -669,6 +740,52 @@ for indt = 1:ntime
              case 'si'
              % Saves the variable after integral over size dimensions
                 tmpvar1 = squeeze(nansum( tmpvar .* STRU.delfm_4d_vec,3)) * CONV.mmolC_2_wetB + STRU.mask_land_g_nan_vec;
+                for ifish = 1:nfish
+                    [var_map(:,:,ifish)]    = function_vec_2_map(tmpvar1(:,ifish),FORC.indlat,FORC.indlon,FORC.mask(:,:,1));
+                end
+                outmode.(outmode.modes{indm}).(tvar_outn{indv})(iit,:,:,:)  = ...
+                squeeze(outmode.(outmode.modes{indm}).(tvar_outn{indv})(iit,:,:,:))  + ...
+                                              var_map/outmode.(outmode.modes{indm}).ndt(iit);
+             case 'si100'
+             % Saves the variable after integral over size dimensions
+                temp_delfm_4d = STRU.delfm_4d_vec;
+                temp_delfm_4d(:,:,1:12) = temp_delfm_4d(:,:,1:12)*NaN;
+                temp_delfm_4d(:,:,13) = temp_delfm_4d(:,:,13)*0.52;
+                tmpvar1 = squeeze(nansum( tmpvar .* temp_delfm_4d,3)) * CONV.mmolC_2_wetB + STRU.mask_land_g_nan_vec;
+                for ifish = 1:nfish
+                    [var_map(:,:,ifish)]    = function_vec_2_map(tmpvar1(:,ifish),FORC.indlat,FORC.indlon,FORC.mask(:,:,1));
+                end
+                outmode.(outmode.modes{indm}).(tvar_outn{indv})(iit,:,:,:)  = ...
+                squeeze(outmode.(outmode.modes{indm}).(tvar_outn{indv})(iit,:,:,:))  + ...
+                                              var_map/outmode.(outmode.modes{indm}).ndt(iit);
+             case 'si1000'
+             % Saves the variable after integral over size dimensions
+                temp_delfm_4d = STRU.delfm_4d_vec;
+                temp_delfm_4d(:,:,1:25) = temp_delfm_4d(:,:,1:25)*NaN;
+                tmpvar1 = squeeze(nansum( tmpvar .* temp_delfm_4d,3)) * CONV.mmolC_2_wetB + STRU.mask_land_g_nan_vec;
+                for ifish = 1:nfish
+                    [var_map(:,:,ifish)]    = function_vec_2_map(tmpvar1(:,ifish),FORC.indlat,FORC.indlon,FORC.mask(:,:,1));
+                end
+                outmode.(outmode.modes{indm}).(tvar_outn{indv})(iit,:,:,:)  = ...
+                squeeze(outmode.(outmode.modes{indm}).(tvar_outn{indv})(iit,:,:,:))  + ...
+                                              var_map/outmode.(outmode.modes{indm}).ndt(iit);
+             case 'si10000'
+             % Saves the variable after integral over size dimensions
+                temp_delfm_4d = STRU.delfm_4d_vec;
+                temp_delfm_4d(:,:,1:37) = temp_delfm_4d(:,:,1:37)*NaN; 
+                temp_delfm_4d(:,:,38) = temp_delfm_4d(:,:,38)*0.52;
+                tmpvar1 = squeeze(nansum( tmpvar .* temp_delfm_4d,3)) * CONV.mmolC_2_wetB + STRU.mask_land_g_nan_vec;
+                for ifish = 1:nfish
+                    [var_map(:,:,ifish)]    = function_vec_2_map(tmpvar1(:,ifish),FORC.indlat,FORC.indlon,FORC.mask(:,:,1));
+                end
+                outmode.(outmode.modes{indm}).(tvar_outn{indv})(iit,:,:,:)  = ...
+                squeeze(outmode.(outmode.modes{indm}).(tvar_outn{indv})(iit,:,:,:))  + ...
+                                              var_map/outmode.(outmode.modes{indm}).ndt(iit);
+             case 'si100000'
+             % Saves the variable after integral over size dimensions
+                temp_delfm_4d = STRU.delfm_4d_vec;
+
+                tmpvar1 = squeeze(nansum( tmpvar .* temp_delfm_4d,3)) * CONV.mmolC_2_wetB + STRU.mask_land_g_nan_vec;
                 for ifish = 1:nfish
                     [var_map(:,:,ifish)]    = function_vec_2_map(tmpvar1(:,ifish),FORC.indlat,FORC.indlon,FORC.mask(:,:,1));
                 end
@@ -784,7 +901,7 @@ end % for indt = 1:ntime
 %--------------------------------------------------------------------------------------------------------------
  if MAIN.save_restart==1
    boats.dfish      = dfish;
-   if strcmp(MAIN.sim_type,'h')
+   if (strcmp(MAIN.sim_type,'hd')||strcmp(MAIN.sim_type,'hf'))
      boats.effort   = effort;
    end
  end
@@ -827,7 +944,7 @@ end % for indt = 1:ntime
 %-----------------------------------------------------------------------------------------
 % Save forcing arrays
 %-----------------------------------------------------------------------------------------
- if strcmp(MAIN.sim_type,'h')
+ if (strcmp(MAIN.sim_type,'hd')||strcmp(MAIN.sim_type,'hf'))
    boats.forcing_used.catchability = catchability_used;
    boats.forcing_used.price        = price_used;
    boats.forcing_used.cost_effort  = cost_effort_used;
