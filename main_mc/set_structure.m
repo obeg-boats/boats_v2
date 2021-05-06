@@ -196,6 +196,8 @@ function structure = set_structure(boats,varargin)
               [structure.fmass_4d_p_mh_vec(:,igroup,isize) FORC.indlat FORC.indlon]  = function_map_2_vec(squeeze(structure.fmass_4d_p_mh(:,:,igroup,isize)),squeeze(FORC.mask(:,:,1)));
               [structure.minf_4d_p_bm1_P_vec(:,igroup,isize) FORC.indlat FORC.indlon]  = function_map_2_vec(squeeze(structure.minf_4d_p_bm1_P(:,:,igroup,isize)),squeeze(FORC.mask(:,:,1)));
               [structure.fmass_4d_p_b_P_vec(:,igroup,isize) FORC.indlat FORC.indlon]   = function_map_2_vec(squeeze(structure.fmass_4d_p_b_P(:,:,igroup,isize)),squeeze(FORC.mask(:,:,1)));
+              [structure.minf_4d_p_bm1_D_vec(:,igroup,isize) FORC.indlat FORC.indlon]  = function_map_2_vec(squeeze(structure.minf_4d_p_bm1_D(:,:,igroup,isize)),squeeze(FORC.mask(:,:,1)));
+              [structure.fmass_4d_p_b_D_vec(:,igroup,isize) FORC.indlat FORC.indlon]   = function_map_2_vec(squeeze(structure.fmass_4d_p_b_D(:,:,igroup,isize)),squeeze(FORC.mask(:,:,1)));
               if isize<ECOL.nfmass
                   [structure.delfm_2end_4d_vec(:,igroup,isize) FORC.indlat FORC.indlon]  = function_map_2_vec(squeeze(structure.delfm_2end_4d(:,:,igroup,isize)),squeeze(FORC.mask(:,:,1)));
               end
