@@ -6,6 +6,9 @@ function [pep] = particle_export(npp,temp,ed)
     % Convert npp    mmolC m-2 s-1-> mmolC m-2 d-1 
     npp_tmp = npp*24*3600;
 
+    % Correct negative npp
+    npp_tmp(find(npp_tmp<0)) = 10^(-30);    
+
     % pe (Dunne et al. 2005, eq 1a)
     pe = -0.0101 * temp + 0.0582 * log(npp_tmp/ed) + 0.419;
     

@@ -1,6 +1,6 @@
-%**************************************************************************************************************
+%*********************************************************************************************************
 % FUNCTION integrate.m
-%**************************************************************************************************************
+%*********************************************************************************************************
 
 %-----------------------------------------------------------------------------------------
 % Authors
@@ -447,7 +447,7 @@ for indt = 1:ntime
       flux_in_P(:,:,1:3) = part_PP_b * (repmat(npp./mphyto,[1 1 ECOL.nfish])) .* (STRU.fmass_bc./repmat(mphyto,[1 1 ECOL.nfish])).^(repmat(INIT.tro_sca(:,:,1),[1 1 ECOL.nfish])-1) * STRU.fmass_bc / STRU.delfm_4d(1,1,1,1);
       flux_in_P(:,:,4:6) = part_PP_b * (repmat(pfb./mbenthos(2),[1 1 ECOL.nfish])) .* (STRU.fmass_bc./repmat(mbenthos(2),[1 1 ECOL.nfish])).^(repmat(INIT.tro_sca(:,:,2),[1 1 ECOL.nfish])-1) * STRU.fmass_bc / STRU.delfm_4d(1,1,4,1);
   else
-      flux_in_P = part_PP_b * (repmat(npp./mphyto,[1 1 ECOL.nfish])) .* (STRU.fmass_bc./repmat(mphyto,[1 1 ECOL.nfish])).^(repmat(ECOL.tro_sca(:,:,1),[1 1 ECOL.nfish])-1) * STRU.fmass_bc / STRU.delfm_4d(1,1,1,1);
+      flux_in_P = part_PP_b * (repmat(npp./mphyto,[1 1 ECOL.nfish])) .* (STRU.fmass_bc./repmat(mphyto,[1 1 ECOL.nfish])).^(repmat(INIT.tro_sca(:,:,1),[1 1 ECOL.nfish])-1) * STRU.fmass_bc / STRU.delfm_4d(1,1,1,1);
   end
   %---------------------------------------------------------------------------------------
   % Flux in of number of eggs produced

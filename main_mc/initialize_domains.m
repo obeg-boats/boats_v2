@@ -98,7 +98,7 @@ function initial = initialize_domains(boats)
      end
      %---------------------------------
      % Economic harvesting (set effort to zero in each group)
-     if strcmp(MAIN.sim_type,'h')
+     if (strcmp(MAIN.sim_type,'hd')||strcmp(MAIN.sim_type,'hf'))
          if (ECOL.pelagic)&&(ECOL.demersal)
             initial.effort = zeros(FORC.nvec,2*ECOL.nfish);
          else
@@ -114,7 +114,7 @@ function initial = initialize_domains(boats)
      % Restart file
      boats_version = boats.param.main.sim_name;
      outdir     = boats.param.path.outdir;
-     path_lname_rest = [outdir '/' 'restart_' boats_version '_nh' boats.param.main.sname_rest];
+     path_lname_rest = [outdir '/' 'restart_' boats_version '_hd' boats.param.main.sname_rest];
 
      %---------------------------------
      % Error if specified restart file lname_rest IS NOT IN in the working directory
@@ -141,7 +141,7 @@ function initial = initialize_domains(boats)
        
        %---------------------------------
        % Economic harvesting
-       if strcmp(MAIN.sim_type,'h')
+       if (strcmp(MAIN.sim_type,'hd')||strcmp(MAIN.sim_type,'hf'))
          % Use effort there is a field named effort in the restart file
          if isfield(restart,'effort')
            initial.effort  = restart.effort;
