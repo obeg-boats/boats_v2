@@ -31,7 +31,7 @@ clear all
 % Preprocess options *******************************
 plot_input = 1;                                     % (yes 1 or no 0)
 create_ecology = 1;                                 % (yes 1 or no 0)
-create_economy = 1;                                 % (yes 1 or no 0)
+create_economy = 0;                                 % (yes 1 or no 0)
 create_regulation = 0;                              % (yes 1 or no 0)
 
 % General forcing paths and characteristics ********
@@ -123,7 +123,7 @@ catch_path = 'input/EcoForcing/catchability_forcing.mat'; % Path of forcing data
 catch_var = 'udef';                                 % Name of catchability variable in catch_path or user defined (udef)
 catch_type = 'rate';                                % Type of user defined cost if cost_var = 'udef' (constant cst or rate or ??)
 catch_ref1 = 7.6045e-08;                            % First parameter for user defined catchability forcing
-catch_ref2 = 0.07;                                  % Second parameter for user defined catchability forcing
+catch_ref2 = 0.05;                                  % Second parameter for user defined catchability forcing
 catch_dim=[1 1 3600];                               % Dimension of user defined catchability forcing
 catch_unit = '[m^2 W^-1 s^-1]';                     % catch_var unit ([m^2 W^-1 s^-1] or ??)
 
@@ -205,6 +205,7 @@ if create_ecology
     Ecological.no3min=no3min;
     Ecological.temperature_pel=temperature_pel;
     Ecological.temperature_dem=temperature_dem;
+    Ecological.depth=depth_low;
     save('Ecological.mat','Ecological','-v7.3')
 end
 
