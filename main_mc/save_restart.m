@@ -8,7 +8,7 @@
  restart.dfish 	= squeeze(boats.dfish);
  dir_restart = boats.param.path.outdir;
 
- if strcmp(boats.param.main.sim_type,'h')
+ if (strcmp(boats.param.main.sim_type,'hd')||strcmp(boats.param.main.sim_type,'hf'))
     restart.effort = squeeze(boats.effort);
  end
  
@@ -39,7 +39,7 @@
    boats = rmfield(boats,'ESM_forcing');
  end
  
- if strcmp(boats.param.main.sim_type,'h')
+ if (strcmp(boats.param.main.sim_type,'hd')||strcmp(boats.param.main.sim_type,'hf'))
    
    if isfield(boats,'effort')
      disp(['remove effort from BOATS']);

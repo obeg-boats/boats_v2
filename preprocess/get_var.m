@@ -13,7 +13,7 @@ function var = get_var(path,var,dim)
     if exist(path,'file')
         load(path);
     else
-        disp('Hum, double-check this path:')
+        disp('Double-check this path:')
         disp(path)
     end
     
@@ -22,15 +22,15 @@ function var = get_var(path,var,dim)
     [struct field]=strtok(var,'.');
     if exist(struct,'var')
         if isempty(field)
-            var=eval(var);
+            var=squeeze(eval(var));
         elseif isfield(eval(struct),field(2:end))
-            var=eval(var);
+            var=squeeze(eval(var));
         else
-            disp('Aye, double-check this variable:')
+            disp('Double-check this variable:')
             disp(varname)
         end
     else
-        disp('Aye, double-check this variable:')
+        disp('Double-check this variable:')
         disp(varname)
     end
     
@@ -42,10 +42,21 @@ function var = get_var(path,var,dim)
     pos1=find(dimvar==dimmat(1));
     pos2=find(dimvar==dimmat(2));
     if isempty(pos1) && isempty(pos2)
-        disp('Aye, maybe problem with dimension lat/lon for:') 
+        % Case no dimension matches expected lat/lon
+        disp('Maybe problem with dimension lat/lon for:') 
         disp(varname)
         return
+    elseif (dimmat(1)==1)&&(dimmat(2)==1)
+        % Case vector forcing 
+        pos=find(dimvar==dimmat(3));
+        if pos == 1
+            var = permute(var,[2,pos]);
+        elseif pos == 2
+            var = permute(var,[1,pos]);
+        end
+        return
     else
+        % Case mapped forcing
         if isempty(pos1)
             if pos2==1
                 var=repmat(var',[dim(1),1]);
@@ -84,13 +95,13 @@ function var = get_var(path,var,dim)
                         tmpvar=tmpvar+var(:,:,1+t*dimmat(3):dimmat(3)+t*dimmat(3))/time*dimmat(3);
                     end
                 else
-                    disp('Aye, no case exist for time in this dimension... Implement it for:') 
+                    disp('No case exist for time in this dimension... Implement it for:') 
                     disp(varname)
                 end
                 var=tmpvar;
             end
         else     
-            disp('Eish, check the time dimension for:') 
+            disp('Check the time dimension for:') 
             disp(varname)
         end
     else
