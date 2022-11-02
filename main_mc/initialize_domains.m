@@ -114,7 +114,7 @@ function initial = initialize_domains(boats)
      % Restart file
      boats_version = boats.param.main.sim_name;
      outdir     = boats.param.path.outdir;
-     path_lname_rest = [outdir '/' 'restart_' boats_version '_hd' boats.param.main.sname_rest];
+     path_lname_rest = [outdir '/' 'restart_' boats_version '_nh' boats.param.main.sname_rest];
 
      %---------------------------------
      % Error if specified restart file lname_rest IS NOT IN in the working directory
