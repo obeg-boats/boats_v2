@@ -30,8 +30,8 @@ clear all
 %**************************************************************************
 % Preprocess options *******************************
 plot_input = 1;                                     % (yes 1 or no 0)
-create_ecology = 1;                                 % (yes 1 or no 0)
-create_economy = 0;                                 % (yes 1 or no 0)
+create_ecology = 0;                                 % (yes 1 or no 0)
+create_economy = 1;                                 % (yes 1 or no 0)
 create_regulation = 0;                              % (yes 1 or no 0)
 
 % General forcing paths and characteristics ********
@@ -101,30 +101,30 @@ temp_dim_pel = [nlat nlon ntime 1 1];               % Dimension of the temp arra
 temp_path_dem = 'frc/temp_bot.mat';                     % Path of forcing dataset where is the demersal temperature
 temp_var_dem = 'temp_bot_c';                          % Name of temperature variable in temp_path
 temp_unit_dem = '[degC]';                           % temp_var unit ([degC])
-temp_dim_dem = [nlat nlon ntime 1 1];               % Dimension of the temp array generatede
+temp_dim_dem = [nlat nlon ntime 1 1];               % Dimension of the temp array generated
 
 % Economical forcing paths and characteristics *****
 % price
-price_path = 'input/EcoForcing/price_forcing.mat'; % Path of forcing dataset where is the price
-price_var = 'udef';                                 % Name of price variable in price_path or user defined (udef)
+price_path = '/Users/jguiet/OneDrive - University of California/BOATS/input/economy/price_forcing.mat'; % Path of forcing dataset where is the price
+price_var = 'price_forcing.price_average_pd_1850_2100';                                 % Name of price variable in price_path or user defined (udef)
 price_type = 'cst';                                 % Type of user defined price if price_var = 'udef' (constant cst or ??)
 price_ref1 = 1.264079636832035e-04;                 % First parameter for user defined price forcing
-price_dim=[1 1 3600];                               % Dimension of user defined price forcing
+price_dim=[1 1 3000 1 1];                           % Dimension of price forcing (out)
 price_unit = '[$ g^-1]';                            % price_var unit ([$ g^-1] or ??)
 % cost
-cost_path = 'input/EcoForcing/cost_effort_forcing.mat'; % Path of forcing dataset where is the cost
-cost_var = 'udef';                                  % Name of cost variable in cost_path or user defined (udef)
+cost_path = '/Users/jguiet/OneDrive - University of California/BOATS/input/economy/cost_effort_forcing.mat'; % Path of forcing dataset where is the cost
+cost_var = 'cost_effort_forcing.cost_effort_average_pd_1850_2100';                      % Name of cost variable in cost_path or user defined (udef)
 cost_type = 'cst';                                  % Type of user defined cost if cost_var = 'udef' (constant cst or ??)
 cost_ref1 = 1.8520e-07;                             % First parameter for user defined cost forcing
-cost_dim=[1 1 3600];                                % Dimension of user defined cost forcing
+cost_dim=[1 1 3000 1 1];                            % Dimension of user defined cost forcing
 cost_unit = '[$ W^-1]';                             % cost_var unit ([$ W^-1] or ??)
 % catchability
-catch_path = 'input/EcoForcing/catchability_forcing.mat'; % Path of forcing dataset where is the catchability
-catch_var = 'udef';                                 % Name of catchability variable in catch_path or user defined (udef)
+catch_path = '/Users/jguiet/OneDrive - University of California/BOATS/input/economy/catchability_forcing.mat'; % Path of forcing dataset where is the catchability
+catch_var = 'catchability_forcing.catch_p05_250y';  % Name of catchability variable in catch_path or user defined (udef)
 catch_type = 'rate';                                % Type of user defined cost if cost_var = 'udef' (constant cst or rate or ??)
 catch_ref1 = 7.6045e-08;                            % First parameter for user defined catchability forcing
 catch_ref2 = 0.05;                                  % Second parameter for user defined catchability forcing
-catch_dim=[1 1 3600];                               % Dimension of user defined catchability forcing
+catch_dim=[1 1 3000 1 1];                           % Dimension of user defined catchability forcing
 catch_unit = '[m^2 W^-1 s^-1]';                     % catch_var unit ([m^2 W^-1 s^-1] or ??)
 
 % Regulation forcing paths and characteristics *****
@@ -213,16 +213,16 @@ end
 if create_economy
     disp('Create economical forcing')
     % Create price ********************************
-    price=get_var(price_path,price_var,[]);
-    price=udef_var(price_type, price_dim, price_ref1);
+    price=get_var(price_path,price_var,price_dim);
+%     price=udef_var(price_type, price_dim, price_ref1);
     % ATT JG arrange
     % Create price ********************************
-    cost=get_var(cost_path,cost_var,[]);
-    cost=udef_var(cost_type, cost_dim, cost_ref1);
+    cost=get_var(cost_path,cost_var,cost_dim);
+%     cost=udef_var(cost_type, cost_dim, cost_ref1);
     % ATT JG arrange
     % Create price ********************************
-    catchability=get_var(catch_path,catch_var,[]);
-    catchability=udef_var(catch_type, catch_dim, catch_ref1, catch_ref2);
+    catchability=get_var(catch_path,catch_var,catch_dim);
+%     catchability=udef_var(catch_type, catch_dim, catch_ref1, catch_ref2);
     % ATT JG arrange 
     % Plot forcings ******************************
     if plot_input
@@ -237,7 +237,7 @@ if create_economy
     Economical.price=price;
     Economical.cost=cost;
     Economical.catchability=catchability;
-    save('Economical.mat','Economical','-v7.3')
+    save('Economical_predef.mat','Economical','-v7.3')
 end
 
 % Load and convert regulation forcing ************  
