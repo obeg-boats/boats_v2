@@ -79,6 +79,20 @@ if (boats.param.economy.depthdep)
   %forcing.depth_profile = exp((-forcing.depth_vec-100)./966);
 end
 
+if (boats.param.economy.zeudep)
+  forcing.zeu_profile = forcing.zeuph_vec*NaN;
+  %1/zeu
+  zmax  = 170;
+  zmean = 57.0527;
+  qmin  = 0.1;
+  forcing.zeu_profile = qmin + (1-qmin) * (1./forcing.zeuph_vec-1/zmax)./(1/zmean-1/zmax);
+  % zeu
+  %zmax  = 170;
+  %zmean = 65;
+  %qmin  = 0.1;
+  %forcing.zeu_profile = repmat(qmin + (1-qmin) * (zmax - forcing.zeuph_vec)./(zmax-zmean),[1,3]); 
+end
+
 %**************************************************************************************************************
 % END FUNCTION
 
