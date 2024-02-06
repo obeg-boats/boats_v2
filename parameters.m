@@ -8,8 +8,8 @@
 % MAIN TUNABLE PARAMETERS
 %**************************************************************************
 % Paths *******************************************
- boats.param.path.wrkdir = ['/data/project3/jguiet/BOATS/src/boats_v2/'];
- boats.param.path.outdir = ['/data/project3/jguiet/BOATS/output/BOATSv2/'];
+ boats.param.path.wrkdir = ['/u/home/j/jguiet/BOATS/compile/WD_template/'];
+ boats.param.path.outdir = ['/u/scratch/j/jguiet/boats/simultmp/'];
 % Names and Switches ******************************
  boats.param.main.sim_type     = 'nh';                                     % No Harvest 'nh' or Harvest simulations 'h'
  boats.param.main.sim_init     = 'PP';                                     % Initialisation from 'PP' or else 'restart'
@@ -18,13 +18,13 @@
  boats.param.main.save_restart = 1;                                        % Save restart: yes=1 ; no=0
  boats.param.main.save_output  = 1;                                        % Save output: yes=1 ; no=0
 % Simulation features *****************************
- boats.param.main.run_length   = 200;%300;                                      % Simulation length in years 
+ boats.param.main.run_length   = 300;                                      % Simulation length in years 
  boats.param.main.dtt          = 30;                                       % days per timestep
  boats.param.main.nforcing     = 12;                                       % number of forcing to loop
  boats.param.main.param_ens    = 1;                                        % Use parameters ensembles: yes=1 ; no=0
  boats.param.main.dataset_ens  = 'ensemble_parameters.mat';                % if param_ens=1 name of ensemble parameters
 % Monte Carlo ensemble ***************************
- boats.param.main.nrun         = 10;                                       % Number of Replicates for ensemble of Monte Carlo simulations
+ boats.param.main.nrun         = 12;                                       % Number of Replicates for ensemble of Monte Carlo simulations
 %**************************************************************************
 % END MAIN TUNABLE PARAMETERS
 %**************************************************************************
@@ -65,7 +65,7 @@
 % PARAMS RELATED TO THE ECOLOGICAL MODULE 
 %**************************************************************************
  boats.param.ecology.pelagic     = 1;                                      % Pelagic community (0 or 1)
- boats.param.ecology.demersal    = 1;					   % Demersal community (0 or 1)
+ boats.param.ecology.demersal    = 0;					   % Demersal community (0 or 1)
 % Spectrum ****************************************
  boats.param.ecology.te          = [0.125 0.125];                                  % trophic efficiency
  boats.param.ecology.ppmr        = [5000 5000];                                   % predator to prey mass ratio
@@ -90,7 +90,7 @@
  boats.param.ecology.malpha      = boats.param.ecology.eta_alpha*boats.param.ecology.minf; % maturity mass
  boats.param.ecology.nfish       = length(boats.param.ecology.minf);       % number of fish groups
 % Iron Limitation *********************************
- boats.param.ecology.kfe         = 5;                                      % coefficient determining sensitivity of fish biomass to iron (No3) concentration
+ boats.param.ecology.kfe         = 1e6;                                      % coefficient determining sensitivity of fish biomass to iron (No3) concentration
                                                                            % set high (1e6) to have no limitation!
 
 %**************************************************************************
@@ -104,16 +104,17 @@
  boats.param.economy.cost_effort_0      = boats.param.economy.cost_global/(boats.param.economy.effort_global*boats.param.conversion.spery); % Cost per unit effort ($ W-1)
  boats.param.economy.k_e                = 1e-6;                            % Fleet dynamic parameter (W $-1 s-1) 1 W of effort per dollar of net revenue per second
  boats.param.economy.sel_pos_1          = 1;                               % Selectivity position shift 1
- boats.param.economy.sel_pos_2          = 0.5;                             % Selectivity position shift 2
- boats.param.economy.sel_pos_3          = 0.25;                            % Selectivity position shift 3
+ boats.param.economy.sel_pos_2          = 1;%0.5;                             % Selectivity position shift 2
+ boats.param.economy.sel_pos_3          = 1;%0.25;                            % Selectivity position shift 3
  boats.param.economy.sel_pos_scale      = [1 1];                               % Selectivity position scale
- boats.param.economy.sel_slope          = [17.8 18];                              % Selectivity slope
+ boats.param.economy.sel_slope          = [17.8 17.8];                              % Selectivity slope
  boats.param.economy.harvest_start      = 0;                               % Year of starting harvest [y]
  boats.param.economy.qcatch0            = 1e-5 * 1.05^(-100);              % Base catchability
  boats.param.economy.price_0            = boats.param.economy.price_global;% Base price (constant)
  boats.param.economy.rc_q_ini           = 0;                               % Discount rate of catchability to determine initial value
  boats.param.economy.q_discount_y       = 0;                               % Number of years to discount catchability
-
+ boats.param.economy.depthdep		= 1; 				   % 0 or 1 for depth dependent cost/catch (to adjust)
+ boats.param.economy.zeudep             = 1;                               % 0 or 1 for zeu dependent cost/catch (to adjust)
 
 %**************************************************************************************************************
 % END OF SCRIPT
