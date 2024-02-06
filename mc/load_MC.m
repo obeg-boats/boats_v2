@@ -25,6 +25,16 @@ for indp=1:size(MParams,1)
        ParLow = ParMean - sqrt(3)*ParStd;
        ParHig = ParMean + sqrt(3)*ParStd;
        ens_param.(genvarname(ParName))(replicateid,id) = ParLow + rndgen * (ParHig-ParLow);
+   case {'uniform_spec'}
+       if id == 1
+           ParLow = ParMean - sqrt(3)*ParStd;
+           ParHig = ParMean + sqrt(3)*ParStd;
+           ens_param.(genvarname(ParName))(replicateid,id) = ParLow + rndgen * (ParHig-ParLow);
+       elseif id == 2
+           ParHig = ens_param.(genvarname(ParName))(replicateid,1);
+           ParLow = ens_param.(genvarname(ParName))(replicateid,1) - 2*sqrt(3) * ParStd;
+           ens_param.(genvarname(ParName))(replicateid,id) = ParLow + rndgen * (ParHig-ParLow);
+       end
    case {'gauss','gaussian','norm','normal'}
        ens_param.(genvarname(ParName))(replicateid,id) = norminv(rndgen,ParMean,ParStd);
    case {'gamma'}
