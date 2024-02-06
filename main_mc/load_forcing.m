@@ -29,6 +29,7 @@ forcing.temperature_pel_K=Ecological.temperature_pel+boats.param.conversion.C_2_
 forcing.temperature_dem=Ecological.temperature_dem;
 forcing.temperature_dem_K=Ecological.temperature_dem+boats.param.conversion.C_2_K;
 forcing.depth=Ecological.depth;
+forcing.depth(find(forcing.depth>-1)) = -1;
 forcing.surf=Ecological.surface;
 forcing.zeuph=Ecological.zeuph;
 
@@ -65,32 +66,28 @@ end
   [forcing.depth_vec forcing.indlat forcing.indlon]               = function_map_2_vec(forcing.depth,squeeze(forcing.mask(:,:,1)));
   forcing.nvec=size(forcing.surf_vec,1);
 
-if (boats.param.economy.depthdep)
+if (boats.param.economy.costpar)
   % Define a depth depedent profile to exploit demersal catch
-  forcing.depth_profile = forcing.depth_vec*NaN;  
+  forcing.cost_profile = forcing.depth_vec*NaN;  
 
   % LINEAR
-  ind_cst = find(-forcing.depth_vec<=100);
-  ind_var = find(-forcing.depth_vec >100);
-  forcing.depth_profile(ind_cst) = 1;
-  forcing.depth_profile(ind_var) = 1 + 1./5.85/100 * (-forcing.depth_vec(ind_var)-100); 
-
-  % EXP
-  %forcing.depth_profile = exp((-forcing.depth_vec-100)./966);
+  ind_cst = find(-forcing.depth_vec<=200);
+  ind_var = find(-forcing.depth_vec >200);
+  forcing.cost_profile(ind_cst) = 1;
+  forcing.cost_profile(ind_var) = 1 + 0.5./5.85/200 * (-forcing.depth_vec(ind_var)-200); 
 end
 
-if (boats.param.economy.zeudep)
-  forcing.zeu_profile = forcing.zeuph_vec*NaN;
-  %1/zeu
-  zmax  = 170;
-  zmean = 57.0527;
-  qmin  = 0.1;
-  forcing.zeu_profile = qmin + (1-qmin) * (1./forcing.zeuph_vec-1/zmax)./(1/zmean-1/zmax);
-  % zeu
-  %zmax  = 170;
-  %zmean = 65;
-  %qmin  = 0.1;
-  %forcing.zeu_profile = repmat(qmin + (1-qmin) * (zmax - forcing.zeuph_vec)./(zmax-zmean),[1,3]); 
+if (boats.param.economy.catchpar)
+  % define a depth dependent catchability
+  forcing.catcha_profile = forcing.depth_vec*NaN;
+  
+  %log10(zbot)
+  zmax = 3.76;
+  zmean = 3.38;
+  qmin  = 0.8;
+  forcing.catcha_profile = qmin + (1-qmin) * (zmax - log10(-forcing.depth_vec))./(zmax-zmean);
+  forcing.catcha_profile(find(isinf(forcing.catcha_profile))) = 5*qmin;
+  forcing.catcha_profile(find(forcing.catcha_profile>5*qmin)) = 5*qmin;
 end
 
 %**************************************************************************************************************
