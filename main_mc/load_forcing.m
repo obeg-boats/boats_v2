@@ -30,8 +30,8 @@ forcing.temperature_dem=Ecological.temperature_dem;
 forcing.temperature_dem_K=Ecological.temperature_dem+boats.param.conversion.C_2_K;
 forcing.depth=Ecological.depth;
 forcing.depth(find(forcing.depth>-1)) = -1;
+forcing.dist=Ecological.dist;
 forcing.surf=Ecological.surface;
-forcing.zeuph=Ecological.zeuph;
 
 %--------------------------------- 
 % Forcing economical
@@ -59,16 +59,27 @@ end
       [forcing.temperature_pel_K_vec(:,itime) forcing.indlat forcing.indlon] = function_map_2_vec(squeeze(forcing.temperature_pel_K(:,:,itime)),squeeze(forcing.mask(:,:,1)));
       [forcing.temperature_dem_vec(:,itime) forcing.indlat forcing.indlon]   = function_map_2_vec(squeeze(forcing.temperature_dem(:,:,itime)),squeeze(forcing.mask(:,:,1)));
       [forcing.temperature_dem_K_vec(:,itime) forcing.indlat forcing.indlon] = function_map_2_vec(squeeze(forcing.temperature_dem_K(:,:,itime)),squeeze(forcing.mask(:,:,1)));
-      [forcing.zeuph_vec(:,itime) forcing.indlat forcing.indlon]           = function_map_2_vec(squeeze(forcing.zeuph(:,:,itime)),squeeze(forcing.mask(:,:,1)));
   end % itime
   [forcing.no3min_vec forcing.indlat forcing.indlon]              = function_map_2_vec(forcing.no3min,squeeze(forcing.mask(:,:,1)));
   [forcing.surf_vec forcing.indlat forcing.indlon]                = function_map_2_vec(forcing.surf,squeeze(forcing.mask(:,:,1)));
   [forcing.depth_vec forcing.indlat forcing.indlon]               = function_map_2_vec(forcing.depth,squeeze(forcing.mask(:,:,1)));
+  [forcing.dist_vec forcing.indlat forcing.indlon]               = function_map_2_vec(forcing.dist,squeeze(forcing.mask(:,:,1)));
   forcing.nvec=size(forcing.surf_vec,1);
 
 if (boats.param.economy.costpar)
   % Define a depth depedent profile to exploit demersal catch
-  forcing.cost_profile = forcing.depth_vec*NaN;  
+  forcing.cost_profile1 = forcing.depth_vec*NaN;
+  forcing.cost_profile2 = forcing.depth_vec*NaN;
+
+  ind_cst = find(-forcing.depth_vec<=200);
+  ind_var = find(-forcing.depth_vec >200);
+  forcing.cost_profile1(ind_cst) = 1;
+  forcing.cost_profile1(ind_var) = 1 + 0.5/5.85/200 * (-forcing.depth_vec(ind_var)-200);
+
+  ind_cst = find(forcing.dist_vec<=370);
+  ind_var = find(forcing.dist_vec >370);
+  forcing.cost_profile2(ind_cst) = 1;
+  forcing.cost_profile2(ind_var) = 1 + 0.5*5.85/5.85/370 * (forcing.dist_vec(ind_var)-370);
 
   % LINEAR
   ind_cst = find(-forcing.depth_vec<=200);
