@@ -24,13 +24,14 @@ function [boats] = run_boats(Ecological_frc, Economical_frc, Userdef_Params, var
 %**************************************************************************
  addpath('main_mc')
  addpath('general')
- 
+
  
 %**************************************************************************
 % LOAD INPUT
 %**************************************************************************
  parameters;
 
+ 
 %************************************************************************** 
 % OPIONAL ARGUMENTS
 %**************************************************************************
@@ -51,10 +52,11 @@ for k = 1:nVarargs
        output_freq = {'snap10year'};
    case 'final'
        output_freq = {'final'};     
-%    otherwise
-%       error(['Argument ' varargin{k} ' not specified']);
+    otherwise
+       error(['Argument ' varargin{k} ' not specified']);
    end
 end
+
 
 %**************************************************************************
 % PREPARE SIMULATION
@@ -88,7 +90,6 @@ end
    % UPDATE PARAMETERS FOR ENSEMBLES
    %***********************************************************************
    if boats.param.main.param_ens
-     %boats.param.main.sname_rest = ['_ind_' num2str(ens_param.ens_index(indr))]; % ATT JG
      boats.param.main.sname_rest = ['_ind_' ens_param.name(indr,:)];
      boats.param = modify_parameters(boats,...
                     'E_activation_A',ens_param.E_activation_A(indr,:), ...
