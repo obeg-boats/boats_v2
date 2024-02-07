@@ -30,6 +30,6 @@ for indr = 1:param_loops
     ens_param = best_param(indr);
     
     % run %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%     run_boats('frc/Ecological.mat','frc/Economical.mat',ens_param,'PP','nh','final')
+    run_boats('frc/Ecological.mat','frc/Economical.mat',ens_param,'PP','nh','final')
     run_boats('frc/Ecological.mat','frc/Economical.mat',ens_param,'restart','hd','annual')
 end 
