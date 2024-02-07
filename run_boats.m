@@ -42,8 +42,8 @@ for k = 1:nVarargs
        boats.param.main.sim_init     = 'PP'; 
    case 'restart'
        boats.param.main.sim_init     = 'restart';
-   case 'h'
-       boats.param.main.sim_type     = 'h';
+   case 'hd'
+       boats.param.main.sim_type     = 'hd';
    case 'nh'
        boats.param.main.sim_type     = 'nh';
    case 'annual'
@@ -144,9 +144,7 @@ end
    % Remove unnecessary files and save restart
    %-----------------------------------------------------------------------------------------------------------
    if boats.param.main.save_restart==1
-     cd(boats.param.path.outdir)
      boats = save_restart(boats);
-     cd(boats.param.path.wrkdir)
    end
 
    %------------ -----------------------------------------------------------------------------------------------
