@@ -127,7 +127,6 @@ function boats = integrate(boats)
    if (ECOL.pelagic)&&(ECOL.demersal)
        dharvest             = nan(FORC.nvec,2*ECOL.nfish,ECOL.nfmass);
        dfish_temp           = nan(FORC.nvec,2*ECOL.nfish,ECOL.nfmass);
-       producfish           = nan(FORC.nvec,2*ECOL.nfish,ECOL.nfmass); % ATT JG
        effort               = nan(FORC.nvec,2*ECOL.nfish);
        effort_change        = nan(FORC.nvec,2*ECOL.nfish);
        cost                 = nan(FORC.nvec,2*ECOL.nfish);
@@ -135,7 +134,6 @@ function boats = integrate(boats)
    else
        dharvest             = nan(FORC.nvec,ECOL.nfish,ECOL.nfmass);
        dfish_temp           = nan(FORC.nvec,ECOL.nfish,ECOL.nfmass);
-       producfish	    = nan(FORC.nvec,ECOL.nfish,ECOL.nfmass); % ATT JG
        effort               = nan(FORC.nvec,ECOL.nfish);
        effort_change        = nan(FORC.nvec,ECOL.nfish);
        cost                 = nan(FORC.nvec,ECOL.nfish);
@@ -365,8 +363,10 @@ for indt = 1:ntime
   temp_fish_pel_m = temp_fish_pel_A;  
   temp_fish_dem_A = squeeze(FORC.temperature_dem_K_vec(:,local_month));
   temp_fish_dem_m = temp_fish_dem_A;
-  if ECON.zeudep
-     zeuph = squeeze(FORC.zeu_profile(:,local_month));
+
+  % For heterogenous catch
+  if ECON.catchpar
+     catch_profile = FORC.catcha_profile;
   end
 
   %-----------------------------------------------------------------------------------------------------------
@@ -543,7 +543,6 @@ for indt = 1:ntime
     %-------------------------------------------------------------------------------------
     % Integrate dfish
     %-------------------------------------------------------------------------------------
-    producfish = ( flux_in - flux_out + flux_fish_growth - mortality ) * MAIN.dtt; % ATT JG
     dfish  = squeeze(dfish) + ( flux_in - flux_out + flux_fish_growth - mortality ) * MAIN.dtts;
     mask_dfish_neg = (squeeze(dfish) < 0);
     dfish(mask_dfish_neg)  = 0;
@@ -553,7 +552,6 @@ for indt = 1:ntime
     %-------------------------------------------------------------------------------------
     % Update fish to calculate harvest
     %-------------------------------------------------------------------------------------
-    producfish = ( flux_in - flux_out + flux_fish_growth - mortality ) * MAIN.dtt; % ATT JG
     dfish_temp  = squeeze(dfish) + ( flux_in - flux_out + flux_fish_growth - mortality ) * MAIN.dtts;
     mask_dfish_temp_neg = (squeeze(dfish_temp) < 0);
     dfish_temp(mask_dfish_temp_neg)  = 0;
@@ -573,17 +571,15 @@ for indt = 1:ntime
         catchability_used(1,indt) = FORC.catchability(indt);
         if (ECOL.pelagic)&&(ECOL.demersal)
             qcatch = 4*FORC.catchability(indt) * ones(1,2*ECOL.nfish);
-%            qcatch = FORC.catchability(indt) * ones(length(boats.forcing.depth_profile),ECOL.nfish);
-%            qcatch = [qcatch,repmat(FORC.catchability(indt) * boats.forcing.depth_profile,[1,3])];
         else
             qcatch = FORC.catchability(indt) * ones(1,ECOL.nfish);
         end
     end
 
     % Spatially variable catchability
-    if ECON.zeudep  
-	qcatch_star = repmat(zeuph,[1,3]).*repmat(qcatch(1,1:3),[size(zeuph,1),1]);
-	qcatch_star = cat(2,qcatch_star,repmat(qcatch(1,1:3),[size(zeuph,1),1]));
+    if ECON.catchpar  
+	qcatch_star = repmat(catch_profile,[1,3]).*repmat(qcatch(1,1:3),[size(catch_profile,1),1]);
+	qcatch_star = cat(2,qcatch_star,0.9*repmat(qcatch(1,1:3),[size(catch_profile,1),1]));
     end 
 
     %-------------------------------------------------------------------------------------
@@ -596,7 +592,7 @@ for indt = 1:ntime
 %   dharvest = min(squeeze(dfish_temp)/dtts, permute(repmat(qcatch(:),[1 nlat nlon nfmass]),[2 3 1 4]) .* ...
 %              repmat(squeeze(effort+epsln),[1 1 1 nfmass]) .* selectivity_4d .* squeeze(dfish_temp));
     % Optimized code by using "bsxfun" instead of repmat
-    if ECON.zeudep
+    if ECON.catchpar
         dharvest = min(squeeze(dfish_temp)/MAIN.dtts, ...
                bsxfun(@times,bsxfun(@times,qcatch_star,squeeze(effort+CONV.epsln)), ...
                STRU.selectivity_4d_vec .* squeeze(dfish_temp)));
@@ -608,6 +604,7 @@ for indt = 1:ntime
    %            bsxfun(@times,bsxfun(@times,qcatch,squeeze(effort+CONV.epsln)), ...
    %            STRU.selectivity_4d_vec .* squeeze(dfish_temp)));
     end
+
     mask_dharvest_neg = (squeeze(dharvest) < 0);
     dharvest(mask_dharvest_neg)  = 0;
     
@@ -615,7 +612,7 @@ for indt = 1:ntime
     % Price forcing
     % input price ($ g-1), multiply by mmolC_2_wetB to get ($ mmolC-1)
     %----------------------------------------------------------------------------------
-    % Set price forcsizeing scenario (adjusted for dharvest calculation)
+    % Set price forcing scenario (adjusted for dharvest calculation)
     price_used(1,indt) = FORC.price(indt);
     if (ECOL.pelagic)&&(ECOL.demersal)
         price       = FORC.price(indt) * ones(2*ECOL.nfish,ECOL.nfmass);
@@ -630,9 +627,10 @@ for indt = 1:ntime
     % Set cost forcing scenario (adjusted for dharvest calculation)
     cost_effort_used(1,indt) = FORC.cost(indt);
     if (ECOL.pelagic)&&(ECOL.demersal)
-	if (ECON.depthdep)
-            cost_effort = FORC.cost(indt) * ones(length(boats.forcing.depth_profile),ECOL.nfish);
-            cost_effort = [cost_effort,repmat(FORC.cost(indt) * boats.forcing.depth_profile,[1,3])];
+	if ECON.costpar
+            cost_effort = [repmat(FORC.cost(indt) * boats.forcing.cost_profile2,[1,3]),repmat(FORC.cost(indt) * (boats.forcing.cost_profile1+boats.forcing.cost_profile2)/2,[1,3])];
+            %cost_effort = FORC.cost(indt) * ones(length(boats.forcing.cost_profile),ECOL.nfish);
+            %cost_effort = [cost_effort,repmat(FORC.cost(indt) * boats.forcing.depth_profile,[1,3])];
 	else
 	    cost_effort = FORC.cost(indt) * ones(1,2*ECOL.nfish);
 	end
@@ -703,7 +701,7 @@ for indt = 1:ntime
         % Set catchability forcing scenario (adjusted for dharvest calculation)
         catchability_used(1,indt) = FORC.catchability(indt);
         if (ECOL.pelagic)&&(ECOL.demersal)
-            qcatch = FORC.catchability(indt) * ones(1,2*ECOL.nfish);
+            qcatch = 4*FORC.catchability(indt) * ones(1,2*ECOL.nfish);
         else
             qcatch = FORC.catchability(indt) * ones(1,ECOL.nfish);
         end
