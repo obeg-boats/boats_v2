@@ -578,7 +578,7 @@ for indt = 1:ntime
 
     % Spatially variable catchability
     if ECON.catchpar  
-	qcatch_star = repmat(catch_profile,[1,3]).*repmat(catch_profile(1,1:3),[size(catch_profile,1),1]);
+	qcatch_star = repmat(catch_profile,[1,3]).*repmat(qcatch(1,1:3),[size(catch_profile,1),1]);
 	qcatch_star = cat(2,qcatch_star,0.9*repmat(qcatch(1,1:3),[size(catch_profile,1),1]));
     end 
 

@@ -8,8 +8,8 @@
 % MAIN TUNABLE PARAMETERS
 %**************************************************************************
 % Paths *******************************************
- boats.param.path.wrkdir = ['/Users/jguiet/OneDrive - University of California/BOATS/src/boats_v2/'];
- boats.param.path.outdir = ['/Users/jguiet/OneDrive - University of California/BOATS/src/boats_v2/'];
+ boats.param.path.wrkdir = [''];
+ boats.param.path.outdir = ['output/'];
 % Names and Switches ******************************
  boats.param.main.sim_type     = 'nh';                                     % No Harvest 'nh' or Harvest simulations 'h'
  boats.param.main.sim_init     = 'PP';                                     % Initialisation from 'PP' or else 'restart'
