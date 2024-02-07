@@ -30,7 +30,7 @@ clear all
 %**************************************************************************
 % Preprocess options *******************************
 plot_input = 1;                                     % (yes 1 or no 0)
-create_ecology = 0;                                 % (yes 1 or no 0)
+create_ecology = 1;                                 % (yes 1 or no 0)
 create_economy = 1;                                 % (yes 1 or no 0)
 create_regulation = 0;                              % (yes 1 or no 0)
 
