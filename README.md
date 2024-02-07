@@ -7,5 +7,4 @@ BiOeconomic mArine Trophic Size-spectrum Model.
 - Guiet, J., Bianchi, D., Scherrer, K., Heneghan, R. and Galbraith, E.D., 2024. BOATSv2: New ecological and economic features improve simulations of High Seas catch and effort. Preprint.
 
 
-Quick start ----------------
-Run MC_run.m for BOATSv2 reference simulations forced with climatological observation.
+Quick start : Run MC_run.m for BOATSv2 reference simulations forced with climatological observation.
