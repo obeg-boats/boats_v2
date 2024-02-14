@@ -30,6 +30,7 @@ forcing.temperature_dem=Ecological.temperature_dem;
 forcing.temperature_dem_K=Ecological.temperature_dem+boats.param.conversion.C_2_K;
 forcing.depth=Ecological.depth;
 forcing.depth(find(forcing.depth>-1)) = -1;
+%forcing.zeuph=Ecological.zeuph;
 forcing.dist=Ecological.dist;
 forcing.surf=Ecological.surface;
 
@@ -59,6 +60,7 @@ end
       [forcing.temperature_pel_K_vec(:,itime) forcing.indlat forcing.indlon] = function_map_2_vec(squeeze(forcing.temperature_pel_K(:,:,itime)),squeeze(forcing.mask(:,:,1)));
       [forcing.temperature_dem_vec(:,itime) forcing.indlat forcing.indlon]   = function_map_2_vec(squeeze(forcing.temperature_dem(:,:,itime)),squeeze(forcing.mask(:,:,1)));
       [forcing.temperature_dem_K_vec(:,itime) forcing.indlat forcing.indlon] = function_map_2_vec(squeeze(forcing.temperature_dem_K(:,:,itime)),squeeze(forcing.mask(:,:,1)));
+%      [forcing.zeuph_vec(:,itime) forcing.indlat forcing.indlon]           = function_map_2_vec(squeeze(forcing.zeuph(:,:,itime)),squeeze(forcing.mask(:,:,1)));
   end % itime
   [forcing.no3min_vec forcing.indlat forcing.indlon]              = function_map_2_vec(forcing.no3min,squeeze(forcing.mask(:,:,1)));
   [forcing.surf_vec forcing.indlat forcing.indlon]                = function_map_2_vec(forcing.surf,squeeze(forcing.mask(:,:,1)));
@@ -97,6 +99,25 @@ if (boats.param.economy.catchpar)
   zmean = 3.38;
   qmin  = 0.8;
   forcing.catcha_profile = qmin + (1-qmin) * (zmax - log10(-forcing.depth_vec))./(zmax-zmean);
+
+%  %(zbot)
+%  zmax = 7473;
+%  zmean = 3810;
+%  qmin  = 0.8;
+%  forcing.catcha_profile = qmin + (1-qmin) * (zmax + forcing.depth_vec)./(zmax-zmean);
+
+%  %(1/zeu)
+%  zmax  = 170;
+%  zmean = 57.0527;
+%  qmin  = 0.1;
+%  forcing.catcha_profile = qmin + (1-qmin) * (1./forcing.zeuph_vec-1/zmax)./(1/zmean-1/zmax);
+
+%  %(zeu)
+%  zmax  = 170;
+%  zmean = 65;
+%  qmin  = 0.1;
+%  forcing.catcha_profile = qmin + (1-qmin) * (zmax - forcing.zeuph_vec)./(zmax-zmean);
+
   forcing.catcha_profile(find(isinf(forcing.catcha_profile))) = 5*qmin;
   forcing.catcha_profile(find(forcing.catcha_profile>5*qmin)) = 5*qmin;
 end

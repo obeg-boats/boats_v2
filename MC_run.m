@@ -12,7 +12,7 @@ addpath('mc/');
 % boats.param.main.MC_param_Dem=set_MC('Demersal');
 % param_loops=boats.param.main.nrun;
 % FOR 5 BEST ENSEMBLES
-load('best_param_5v2.mat')
+load('best_param_5v1.mat') % for v1 or v2
 param_loops = 5;
 
 % Loop ensemble of simulations -> spin-up + transient

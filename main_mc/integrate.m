@@ -367,6 +367,7 @@ for indt = 1:ntime
   % For heterogenous catch
   if ECON.catchpar
      catch_profile = FORC.catcha_profile;
+%     catch_profile = squeeze(FORC.catcha_profile(:,local_month)); 
   end
 
   %-----------------------------------------------------------------------------------------------------------
