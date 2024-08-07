@@ -1,4 +1,4 @@
-function [boats] = run_boats(Ecological_frc, Economical_frc, Userdef_Params, varargin)
+function [boats] = run_boats(Ecological_frc, Economic_frc, Userdef_Params, varargin)
 %**************************************************************************
 % BOATS MAIN
 % The BiOeconomic mArine Trophic Size-spectrum model computes the
@@ -18,7 +18,7 @@ function [boats] = run_boats(Ecological_frc, Economical_frc, Userdef_Params, var
 % Inputs:
 %   - parameters.txt
 %   - Ecological.mat
-%   - Economical.mat (for harvest simulations)
+%   - Economic.mat (for harvest simulations)
 % Outputs:
 %   - Boats.mat
 %**************************************************************************
@@ -63,7 +63,7 @@ end
 %**************************************************************************
 % Forcings datasets *******************************
  forcing_ecological=Ecological_frc;
- forcing_economical=Economical_frc;
+ forcing_economic=Economic_frc;
 % Make output/restar dirs *************************
  if ~exist(boats.param.path.outdir)
     mkdir(boats.param.path.outdir)
@@ -113,7 +113,7 @@ end
    % LOAD_FORCINGS
    %***********************************************************************   
    boats.forcing = load_forcing(boats,...
-                     forcing_ecological,forcing_economical);
+                     forcing_ecological,forcing_economic);
    
                  
    %***********************************************************************

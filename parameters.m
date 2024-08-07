@@ -94,7 +94,7 @@
                                                                            % set high (1e6) to have no limitation!
 
 %**************************************************************************
-% PARAMS RELATED TO THE ECONOMICAL MODULE 
+% PARAMS RELATED TO THE ECONOMIC MODULE 
 %**************************************************************************
  boats.param.economy.landedvalue_global = 8.4233e+10;                      % SAUP 1990-2006 average ($)
  boats.param.economy.yield_global       = 7.9963e+13;                      % SAUP 1990-2006 average (g)
@@ -115,6 +115,14 @@
  boats.param.economy.q_discount_y       = 0;                               % Number of years to discount catchability
  boats.param.economy.costpar		= 1; 				   % 0 or 1 for depth dependent costs
  boats.param.economy.catchpar           = 1;                               % 0 or 1 for depth dependent catchabilities
+
+% Regulation **************************************
+ boats.param.economy.omnT               = 0;				   % 0 or 1 for dynamic regulation
+ boats.param.economy.reg_timestep       = 'yearly';                       % 'monthly' or 'yearly' depending on assumptions about timeframe for update management advice
+ boats.param.economy.reg_threshold      = 0.75;                            % Threshold value for regulation (fraction of maximum catch so far)
+ boats.param.economy.times_length       = 120;                             % Length of time span from which harvest is saved to determine time of regulation onset, max harvest,
+ boats.param.economy.k_s                = 4*1e-8;                          % Regulation dynamics parameter
+ boats.param.economy.precaut            = 1;                               % level of precaution if effort target smaller than the estimate E_MSY should be used (E_target = precaut * E_MSY)
 
 %**************************************************************************************************************
 % END OF SCRIPT

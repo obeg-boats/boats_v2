@@ -14,11 +14,11 @@
 %   - npp_ed [mmolC m^-3 d^-1] (net primary production averaged on euphotic zone depth)
 %   - pfb [mmolC m^-2 s^-1] (particule flux at bottom)
 %   - temperature pelagic / demersal [deg C] (water temperature)
-% Economical input 'Economical.mat' (for harvest simulations):
+% Economic input 'Economic.mat' (for harvest simulations):
 %   - price [$ g^-1] (fish price history)
 %   - cost [$ W^-1] (exploitation cost history)
 %   - catchability [m^2 W^-1 s^-1] (catchability history)
-%   - efftar [s-1] (effective effort target)
+%   - effEtar [s-1] (effective effort target)
 %   - societenf [??] (societal enforcement)
 %**************************************************************************
 addpath('preprocess')
@@ -30,16 +30,16 @@ clear all
 %**************************************************************************
 % Preprocess options *******************************
 plot_input = 1;                                     % (yes 1 or no 0)
-create_ecology = 1;                                 % (yes 1 or no 0)
-create_economy = 1;                                 % (yes 1 or no 0)
-create_regulation = 0;                              % (yes 1 or no 0)
+create_ecology = 0;                                 % (yes 1 or no 0)
+create_economy = 0;                                 % (yes 1 or no 0)
+create_regulation = 1;                              % (yes 1 or no 0)
 
 % General forcing paths and characteristics ********
 nlat = 180;                                         % nlat = m nodes along latitude
 nlon = 360;                                         % nlon = n nodes along longitude
 ntime = 12;                                         % ntime = t distinct time steps per forcing
 ngroup = 3;                                         % ngroup = g fish groups per forcing (facultativ)
-nensemble = 5;                                      % nensemble = e ensembles per forcing (facultativ)
+nensemble = 1;                                      % nensemble = e ensembles per forcing (facultativ)
 % mask
 mask_path = 'frc/mask_notlme_high_nan.mat';                     % Path of forcing dataset where is the mask
 mask_var = 'mask_notlme_high_nan';                 % Name of mask variable in mask_path
@@ -103,7 +103,7 @@ temp_var_dem = 'temp_bot_c';                          % Name of temperature vari
 temp_unit_dem = '[degC]';                           % temp_var unit ([degC])
 temp_dim_dem = [nlat nlon ntime 1 1];               % Dimension of the temp array generated
 
-% Economical forcing paths and characteristics *****
+% Economic forcing paths and characteristics *****
 % price
 price_path = '/Users/jguiet/OneDrive - University of California/BOATS/input/economy/price_forcing.mat'; % Path of forcing dataset where is the price
 price_var = 'price_forcing.price_average_pd_1850_2100';                                 % Name of price variable in price_path or user defined (udef)
@@ -128,13 +128,18 @@ catch_dim=[1 1 3000 1 1];                           % Dimension of user defined 
 catch_unit = '[m^2 W^-1 s^-1]';                     % catch_var unit ([m^2 W^-1 s^-1] or ??)
 
 % Regulation forcing paths and characteristics *****
-% MSY effective effort target
-efftarg_path = '/Users/jguiet/MODELS/BOATS/forcing/dev/E_eff_MSY_true_all.mat'; % Path of forcing dataset where is t??
-efftarg_var = 'E_eff_MSY_true_all';
-efftarg_dim = [nlat nlon 1 ngroup nensemble];       % Dimension of the effort target array generated
-efftarg_unit = '[s-1 (?)]';                         % efftarg_var unit ([s^-1])
-% Social enforcement target
-% GOOD LUCK...(MODIF)
+% MSY/MEY effective effort target
+effEtarg_path = '/Users/jguiet/OneDrive - University of California/BOATS/input/regulation/E_eff_MSY_true_14028B_.mat'; % Path of forcing dataset where is the effort target
+effEtarg_var = 'E_eff_MSY_true';
+effEtarg_dim = [nlat nlon 1 2*ngroup nensemble];      % Dimension of the effort target array generated
+effEtarg_unit = '[s^-1]';                           % efftarg_var unit ([s^-1])
+% Societal enforcement
+societenf_path = 'frc/Se_mask_CPI.mat'; % Path of forcing dataset where is the societal enforcement
+societenf_var = 'udef';                             % Name of catchability variable in socenf_path ('Se_mask') or user defined (udef)
+societenf_type = 'cst';                             % Type of user defined socenf if socenf_var = 'udef' (constant cst or rate or ??)
+societenf_ref1 = 1;                                 % First parameter for user defined socenf forcing (e.g. if Se constant = 1, put this here!
+societenf_dim = [nlat nlon 1 1 1];
+societenf_unit = '[]';
 %**************************************************************************
 % END DEFINE FORCING CHARACTERISTICS
 %**************************************************************************
@@ -209,9 +214,9 @@ if create_ecology
     save('Ecological.mat','Ecological','-v7.3')
 end
 
-% Load and convert economical forcing *************  
+% Load and convert economic forcing *************  
 if create_economy
-    disp('Create economical forcing')
+    disp('Create economic forcing')
     % Create price ********************************
     price=get_var(price_path,price_var,price_dim);
 %     price=udef_var(price_type, price_dim, price_ref1);
@@ -234,28 +239,31 @@ if create_economy
         plot_domain1D(1:length(catchability),catchability,'time','catchability [m^2 W^-1 s^-1]',7)
     end
     % Save forcing
-    Economical.price=price;
-    Economical.cost=cost;
-    Economical.catchability=catchability;
-    save('Economical_predef.mat','Economical','-v7.3')
+    Economic.price=price;
+    Economic.cost=cost;
+    Economic.catchability=catchability;
+    save('Economic.mat','Economic','-v7.3')
 end
 
 % Load and convert regulation forcing ************  
 if create_regulation
     disp('Create regulation forcing')
     % Create effort target ***********************
-    efftarg=get_var(efftarg_path,efftarg_var,efftarg_dim);
+    effEtarg=get_var(effEtarg_path,effEtarg_var,effEtarg_dim);
     % Create social enforcement ******************
-    % GOOD LUCK ! (MODIF)
+    societenf=get_var(societenf_path,societenf_var,societenf_dim);         % SOCIETAL ENFORCEMENT AS A MAP
+    societenf=udef_var(societenf_type, societenf_dim, societenf_ref1);     % SOCIETAL ENFORCEMENT AS A CONSTANT    
     % Plot forcings ******************************
     if plot_input
-        % Efftarg
-        plot_domain2D(squeeze(efftarg(:,:,1,1)),lon,lat,mask,'Effort target [??]',8)
+        plot_domain1D(1:length(societenf),societenf,'time','societenf [m^2 W^-1 s^-1]',8)
     end
     % Save forcing
-    Regulation.efftarg=efftarg;
-    %(MODIF)
-    save('Regulation.mat','Regulation','-v7.3')
+    if exist('frc/Economic.mat')==2
+        load('frc/Economic.mat')
+    end
+    Economic.effEtarg=effEtarg;
+    Economic.societenf=societenf;
+    save('frc/Economic.mat','Economic','-v7.3')
 end
 disp('Done !')
 

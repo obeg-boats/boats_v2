@@ -26,7 +26,7 @@ function param = modify_parameters(boats,varargin)
  param.ecology = modify(boats.param.ecology,varargin);
  
 %---------------------------------
-% Modify economical parameters
+% Modify economic parameters
  param.economy = modify(boats.param.economy,varargin);
 
 %**************************************************************************************************************

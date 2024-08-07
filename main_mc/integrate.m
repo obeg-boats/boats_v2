@@ -9,6 +9,7 @@
 % David A. Carozza  (david.carozza@gmail.com)
 % Daniele Bianchi   (dbianchi@atmos.ucla.edu)
 % Eric D. Galbraith (eric.d.galbraith@gmail.com)
+% Kim J.N. Scherrer (kim.jn.scherrer@gmail.com)
 
 %-----------------------------------------------------------------------------------------
 % Introduction
@@ -129,15 +130,41 @@ function boats = integrate(boats)
        dfish_temp           = nan(FORC.nvec,2*ECOL.nfish,ECOL.nfmass);
        effort               = nan(FORC.nvec,2*ECOL.nfish);
        effort_change        = nan(FORC.nvec,2*ECOL.nfish);
+       effort_month         = nan(FORC.nvec,2*ECOL.nfish);
        cost                 = nan(FORC.nvec,2*ECOL.nfish);
        revenue              = nan(FORC.nvec,2*ECOL.nfish);
+       if ECON.omnT
+           revenue_memory       = nan(FORC.nvec,2*ECOL.nfish,12);
+           cost_memory          = nan(FORC.nvec,2*ECOL.nfish,12);
+           effort_memory        = nan(FORC.nvec,2*ECOL.nfish,12); 
+           % time series for determining regulation onset
+           harvest_sum              = nan(FORC.nvec,2*ECOL.nfish);
+           harvest_times            = zeros(FORC.nvec,2*ECOL.nfish,ECON.times_length);
+           annual_harvest           = zeros(FORC.nvec,2*ECOL.nfish); % annual total harvest used for economic calculations??
+           annual_harvest_max       = zeros(FORC.nvec,2*ECOL.nfish); % annual harvest max used for regulation onset
+           regulation_onset         = zeros(FORC.nvec,2*ECOL.nfish); % Needed if only one effort target should be calculated, 0 = no reg target set, 1 = regulation has been initiated,  [* ECON.reg_onset]
+           indt_at_reg_onset        = zeros(FORC.nvec,2*ECOL.nfish);
+       end
    else
        dharvest             = nan(FORC.nvec,ECOL.nfish,ECOL.nfmass);
        dfish_temp           = nan(FORC.nvec,ECOL.nfish,ECOL.nfmass);
        effort               = nan(FORC.nvec,ECOL.nfish);
        effort_change        = nan(FORC.nvec,ECOL.nfish);
+       effort_month         = nan(FORC.nvec,ECOL.nfish);
        cost                 = nan(FORC.nvec,ECOL.nfish);
        revenue              = nan(FORC.nvec,ECOL.nfish);
+       if ECON.omnT
+           revenue_memory       = nan(FORC.nvec,ECOL.nfish,12);
+           cost_memory          = nan(FORC.nvec,ECOL.nfish,12);
+           effort_memory        = nan(FORC.nvec,ECOL.nfish,12);
+           % time series for determining regulation onset
+           harvest_sum              = nan(FORC.nvec,ECOL.nfish);
+           harvest_times            = zeros(FORC.nvec,ECOL.nfish,ECON.times_length);
+           annual_harvest           = zeros(FORC.nvec,ECOL.nfish); % annual total harvest used for economic calculations??
+           annual_harvest_max       = zeros(FORC.nvec,ECOL.nfish); % annual harvest max used for regulation onset
+           regulation_onset         = zeros(FORC.nvec,ECOL.nfish); % Needed if only one effort target should be calculated, 0 = no reg target set, 1 = regulation has been initiated,  [* ECON.reg_onset]
+           indt_at_reg_onset        = zeros(FORC.nvec,ECOL.nfish); 
+       end
    end
   
    %-----------------------------------------------------------------------------------------
@@ -647,7 +674,22 @@ for indt = 1:ntime
 %   revenue = nansum( permute(repmat(price,[1 1 nlat nlon]),[3 4 1 2]) .* squeeze(dharvest) .* delfm_4d, 4);
     % Optimized code by using "bsxfun" instead of repmat
     revenue = nansum(bsxfun(@times,permute(price,[3 1 2]),squeeze(dharvest) .* STRU.delfm_4d_vec),3);
-    
+
+    %-------------------------------------------------------------------------------------
+    % revenue_memory [nlat,nlon,nfish,12] % SAVES REVENUE FR. LAST 12 MONTHS
+    %-------------------------------------------------------------------------------------
+    if ECON.omnT
+        % Save revenue time series to use for annual effort update
+        if indt == 1  % set first value of harvest_sum as the first point in time series
+            revenue_memory = revenue;
+        elseif indt <= 12 % add present harvest_sum value as the following point until reaching desired timeseries lenght (times_length)
+            revenue_memory = cat(3, revenue_memory, revenue);  % add new point to the 4th dimension (i.e. the time series) in harvest_data
+        else        % when timeseries length is times_length, cut off the oldest data point and add present harvest_sum to the end of time serie
+            revenue_memory(:,:,1:11) = revenue_memory(:,:,2:12);
+            revenue_memory(:,:,12) = revenue;
+        end
+    end
+
     %-------------------------------------------------------------------------------------
     % cost [nlat,nlon,nfish]
     %-------------------------------------------------------------------------------------
@@ -660,10 +702,155 @@ for indt = 1:ntime
     cost =  bsxfun(@times,cost_effort,squeeze(effort + CONV.epsln));
 
     %-------------------------------------------------------------------------------------
-    % effort_change [nlat,nlon,nfish]
+    % cost_memory [nlat,nlon,nfish,12] % SAVES COST FR. LAST 12 MONTHS
     %-------------------------------------------------------------------------------------
-    effort_change = ECON.k_e * (revenue - cost) ./ (effort + CONV.epsln);
+    if ECON.omnT
+        % Save cost time series to use for annual effort update
+        if indt == 1  % set first value of harvest_sum as the first point in time series
+            cost_memory = cost;
+        elseif indt <= 12 % add present harvest_sum value as the following point until reaching desired timeseries lenght (times_length)
+            cost_memory = cat(3, cost_memory, cost);  % add new point to the 4th dimension (i.e. the time series) in harvest_data
+        else        % when timeseries length is 12 months long, cut off the oldest data point and add present harvest_sum to the end of time serie
+            cost_memory(:,:,1:11) = cost_memory(:,:,2:12);
+            cost_memory(:,:,12) = cost;
+        end
+    end
+
+    if ECON.omnT
+        %----------------------------------------------------------------------------------
+        % Societal enforcement forcing [nlat,nlon,nfish]
+        %----------------------------------------------------------------------------------
+        % Set societal enforcement forcing scenario
+        if (ECOL.pelagic)&&(ECOL.demersal)
+            if length(size(FORC.societenf)) == 2
+                % Se CONSTANT OVER TIME
+                societenf_vec = repmat(FORC.societenf_vec,[1,2*ECOL.nfish]);    % create identical maps for all three groups
+            elseif length(size(FORC.societenf)) == 3
+                % Se HAS TIME DIMENSION
+                societenf_vec = repmat(FORC.societenf_vec(:,indt),[1,2*ECOL.nfish]);    % create identical maps for all three groups
+            end
+        else
+            if length(size(FORC.societenf)) == 2
+                % Se CONSTANT OVER TIME
+                societenf_vec = repmat(FORC.societenf_vec,[1,ECOL.nfish]);    % create identical maps for all three groups
+            elseif length(size(FORC.societenf)) == 3
+                % Se HAS TIME DIMENSION
+                societenf_vec = repmat(FORC.societenf_vec(:,indt),[1,ECOL.nfish]);    % create identical maps for all three groups
+            end
+        end
+
+        %----------------------------------------------------------------------------------
+        % Effective effort target forcing [nlat,nlon,nfish]
+        %----------------------------------------------------------------------------------
+        % Set effective effort target forcing scenario
+        if length(size(FORC.effEtarg)) == 3 % effective effort target has no time dimension [lat lon group]
+            effEtarg_vec = FORC.effEtarg_vec; % If effEtarg = constant over time
+        elseif length(size(FORC.effEtarg)) == 4  % indt >= 12 %
+            effEtarg_vec = squeeze(FORC.effEtarg_vec(:,:,indt/12)); % ATT MIGHT BE BROKEN
+        end
+
+        %-------------------------------------------------------------------------------------
+        % Regulated and unregulated cells [nlat,nlon,nfish]
+        %-------------------------------------------------------------------------------------
+        % Calculate effort evolution in cells where a regulation target has been
+        % estimated because of decreasing catch
+        mask_reg            = find(regulation_onset == 1); % only in cells where regulation has started
+        mask_noreg                  = find(regulation_onset == 0);
+
+        % only cells where regulation has been triggered AND current nominal effort is higher than target nominal effort!
+
+        %-------------------------------------------------------------------------------------
+        % Calculate effort_change every month
+        %-------------------------------------------------------------------------------------
+        if strcmp(ECON.reg_timestep,'monthly')
+            %-------------------------------------------------------------------------------------
+            % Calculate regulated effort_change
+            %-------------------------------------------------------------------------------------
+            effort_change(mask_reg) = ECON.k_e * (revenue(mask_reg) - cost(mask_reg)) ./ (effort(mask_reg) + CONV.epsln) ...
+               .* (ones(length(mask_reg),1) - societenf(mask_reg)) + ECON.k_s .* societenf(mask_reg) .* (effEtarg(mask_reg) * ECON.precaut ...
+                / FORC.catchability(indt) - effort(mask_reg)); % assuming all groups have same qcatch
+
+            %-------------------------------------------------------------------------------------
+            % Calculate unregulated effort_change [nlat,nlon,nfish]
+            %-------------------------------------------------------------------------------------
+            % Calculate effort evolution in cells where no regulation target has
+            % been estimated, i.e. open access effort
+            effort_change(mask_noreg)   = ECON.k_e .* (revenue(mask_noreg) - cost(mask_noreg)) ./ (effort(mask_noreg) + CONV.epsln);
+
+            %-------------------------------------------------------------------------------------
+            % integrate effort [nlat,nlon,nfish]
+            %-------------------------------------------------------------------------------------
+            % Monthly integration of effort
+            effort = squeeze(effort) + effort_change * MAIN.dtts;
+            mask_effort_neg = (squeeze(effort) < 0);
+            effort(mask_effort_neg)  = 0;
+
+        %-------------------------------------------------------------------------------------
+        % Calculate effort_change once a year
+        %-------------------------------------------------------------------------------------
+        elseif (mod(indt,12) == 1) && (indt > 12) % reg_timestep == 'yearly', mod(indt,12) == 1 corresponds to January
+            %-------------------------------------------------------------------------------------
+            % revenue_y, cost_y, effort_y [nlat,nlon,nfish]
+            %-------------------------------------------------------------------------------------
+            % Annual sum of rates of revenue, profit, effort and catchability for calculation
+            % of effort_change (based on profit-effort ratio and effort-effort
+            % target difference).
+
+            revenue_y_avg       = mean(revenue_memory,3);
+            cost_y_avg          = mean(cost_memory,3);
+            effort_y_avg        = mean(effort_memory,3);
+            catchability_y_avg  = mean(catchability_used(1,indt-12:indt-1));
+
+            %-------------------------------------------------------------------------------------
+            % Calculate regulated effort_change
+            %-------------------------------------------------------------------------------------
+            effort_change(mask_reg) = ECON.k_e * (revenue_y_avg(mask_reg) - cost_y_avg(mask_reg)) ./ (effort_y_avg(mask_reg) + CONV.epsln) ...
+                .* (ones(length(mask_reg),1) - societenf_vec(mask_reg)) + ECON.k_s .* societenf_vec(mask_reg) .* (effEtarg_vec(mask_reg) * ECON.precaut ...
+                / catchability_y_avg - effort_y_avg(mask_reg));
+
+            %-------------------------------------------------------------------------------------
+            % Calculate unregulated effort_change [nlat,nlon,nfish]
+            %-------------------------------------------------------------------------------------
+            % Calculate effort evolution in cells where no regulation target has
+            % been estimated, i.e. open access effort
+            effort_change(mask_noreg)   = ECON.k_e .* (revenue_y_avg(mask_noreg) - cost_y_avg(mask_noreg)) ./ (effort_y_avg(mask_noreg) + CONV.epsln);
+
+            %-------------------------------------------------------------------------------------
+            % integrate effort [nlat,nlon,nfish]
+            %-------------------------------------------------------------------------------------
+            % Annual integration of effort
+            effort = squeeze(effort) + effort_change * CONV.spery; % * MAIN.dtts
+            mask_effort_neg = (squeeze(effort) < 0);
+            effort(mask_effort_neg)  = 0;
+        end
+
+        %-------------------------------------------------------------------------------------
+        % effort_memory [nlat,nlon,nfish,12]
+        %-------------------------------------------------------------------------------------
+        % Save last 12 months of effort to use in calculation of effort_change
+        if indt == 1  % set first value of harvest_sum as the first point in time series
+            effort_memory = effort;
+        elseif indt <= 12 % add present harvest_sum value as the following point until reaching desired timeseries lenght (times_length)
+            effort_memory = cat(3, effort_memory, effort);  % add new point to the 4th dimension (i.e. the time series) in harvest_data
+        else        % when timeseries length is times_length, cut off the oldest data point and add present harvest_sum to the end of time serie
+            effort_memory(:,:,1:11) = effort_memory(:,:,2:12);
+            effort_memory(:,:,12) = effort;
+        end
+
+    else
+        %-------------------------------------------------------------------------------------
+        % effort_change [nlat,nlon,nfish]
+        %-------------------------------------------------------------------------------------
+        effort_change = ECON.k_e * (revenue - cost) ./ (effort + CONV.epsln);
     
+        %-------------------------------------------------------------------------------------
+        % integrate effort [nlat,nlon,nfish]
+        %-------------------------------------------------------------------------------------
+        effort = squeeze(effort) + effort_change * MAIN.dtts;
+        mask_effort_neg = (squeeze(effort) < 0);
+        effort(mask_effort_neg)  = 0;
+    end
+
     %-------------------------------------------------------------------------------------
     % integrate dfish [nlat,nlon,nfish,nfmass]
     %-------------------------------------------------------------------------------------
@@ -671,13 +858,93 @@ for indt = 1:ntime
     mask_dfish_neg = (squeeze(dfish) < 0);
     dfish(mask_dfish_neg)  = 0;
 
-    %-------------------------------------------------------------------------------------
-    % integrate effort [nlat,nlon,nfish]
-    %-------------------------------------------------------------------------------------
-    effort = squeeze(effort) + effort_change * MAIN.dtts;
-    mask_effort_neg = (squeeze(effort) < 0);
-    effort(mask_effort_neg)  = 0;
+    if ECON.omnT
+        %-------------------------------------------------------------------------------------
+        % DETERMINE IF REGULATION SHOULD BEGIN: regulation_onset
+        %-------------------------------------------------------------------------------------
 
+        %-------------------------------------------------------------------------------------
+        % harvest_sum [nlat,nlon,nfish]
+        %-------------------------------------------------------------------------------------
+        % sum harvest over mass classes (dharvest * delfm) to be used as
+        % indicators of need for regulation
+        %-------------------------------------------------------------------------------------
+        harvest_sum(:,:) = nansum(dharvest .* STRU.delfm_4d_vec,3);
+
+        %-------------------------------------------------------------------------------------
+        % harvest_times [nlat,nlon,nfish,times_length]
+        %-------------------------------------------------------------------------------------
+        % save "timeseries" of harvest for determination of regulation onset
+        %-------------------------------------------------------------------------------------
+        if indt == 1  % set first value of harvest_sum as the first point in time series
+            harvest_times = harvest_sum;     % This command overwrites the preallocated array for harvest_times: harvest_times = harvest_sum;
+            % harvest_times(:,:,:,indt) = harvest_sum;   % Why not use this?
+        elseif indt <= ECON.times_length % add present harvest_sum value as the following point until reaching desired timeseries lenght (times_length)
+            harvest_times = cat(3, harvest_times, harvest_sum);  % add new point to the 4th dimension (i.e. the time series) in harvest_data
+        else        % when timeseries length is times_length, cut off the oldest data point and add present harvest_sum to the end of time serie
+            harvest_times(:,:,1:ECON.times_length-1) = harvest_times(:,:,2:ECON.times_length);
+            harvest_times(:,:,ECON.times_length) = harvest_sum;
+        end
+
+        %-------------------------------------------------------------------------------------
+        % annual_harvest_max [nlat,nlon,nfish]
+        %-------------------------------------------------------------------------------------
+        % save the highest recorded annual harvest so far/of all time steps
+        %-------------------------------------------------------------------------------------
+        if indt == 1
+            annual_harvest_max = harvest_sum; % default initial harvest max is harvest_sum in January (means that it will definitely will be smaller than 2nd years harvest)
+        elseif mod(indt,12) == 1 % each january, sum the 12 previous months in harvest_data to get annual harvest
+            annual_harvest = nansum(harvest_times(:,:,end-12:end-1),3); % save harvest from previous 12 months using the last 12 months in harvest_data
+            annual_max_ind = find(annual_harvest > annual_harvest_max); % find all cells where calculated annual_harvest is higher than annual_harvest_max previously calculated
+            annual_harvest_max(annual_max_ind) = annual_harvest(annual_max_ind); % update new highest annual harvest so far!
+        end
+
+        %-------------------------------------------------------------------------------------
+        % effort_times [nlat,nlon,nfish,times_length]
+        %-------------------------------------------------------------------------------------
+        % save "timeseries" of effort for 'optS' and 'stockT' regulation
+        %-------------------------------------------------------------------------------------
+        if indt == 1
+            effort_times           = effort; % effort_month
+        elseif indt <= ECON.times_length
+            effort_times           = cat(3, effort_times, effort); % effort_month
+        else
+            effort_times(:,:,1:ECON.times_length-1)  = effort_times(:,:,2:ECON.times_length);
+            effort_times(:,:,ECON.times_length)      = effort; % effort_month
+        end
+
+        %-------------------------------------------------------------------------------------
+        % DETERMINE REGULATION ONSET (AND TARGET DEPENDING ON reg_type)
+        %-------------------------------------------------------------------------------------
+        if (ECOL.pelagic)&&(ECOL.demersal)
+            ngp       = 2*ECOL.nfish;
+        else
+            ngp       = ECOL.nfish;
+        end
+        for ll = 1:FORC.nvec
+            for group = 1:ngp
+                if (mod(indt,12) == 1) && (indt ~= 1) && (annual_harvest(ll,group) < ECON.reg_threshold * ...
+                        annual_harvest_max(ll,group)) && (regulation_onset(ll,group) == 0) ...
+                        && (annual_harvest(ll,group) > 1e-25 ) % Every January, determine regulation onset and target, last condition added to avoid too-early regulation onset
+                    if strcmp(ECON.reg_timestep,'monthly')
+                        % Set regulation onset to 1 and start the adaptive regulation in next step
+                        if ((effEtarg_vec(ll,group) * ECON.precaut / FORC.catchability(indt)) < effort(ll,group))
+                            regulation_onset(ll,group) = 1;
+                            % save the 'indt' for time of regulation onset
+                            indt_at_reg_onset(ll,group) = indt;
+                        end
+                    elseif strcmp(ECON.reg_timestep,'yearly')
+                        if ((effEtarg_vec(ll,group) * ECON.precaut / catchability_y_avg) < effort(ll,group))
+                            regulation_onset(ll,group) = 1;
+                            % save the 'indt' for time of regulation onset
+                            indt_at_reg_onset(ll,group) = indt;
+                        end
+                    end
+                end
+            end
+        end
+
+    end
   elseif strcmp(MAIN.sim_type,'hf')  % Economic harvesting
 
     %-------------------------------------------------------------------------------------
