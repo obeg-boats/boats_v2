@@ -184,6 +184,8 @@ function boats = integrate(boats)
  % Prepare output subroutine
  %--------------------------------------------------------------------------------------------------------------
  outmode = boats.output;
+ outmode.lon = FORC.lon;
+ outmode.lat = FORC.lat;
  outmode.noutm = length(outmode.modes);
  % Prepare averaging time bounds
  % This is for cases where time bounds are not specified

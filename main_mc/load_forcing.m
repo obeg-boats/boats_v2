@@ -17,6 +17,8 @@ end
 forcing.mask=repmat(Ecological.mask,[1 1 size(Ecological.npp,3)]);
 forcing.nlat=size(forcing.mask,1);
 forcing.nlon=size(forcing.mask,2);
+forcing.lat=Ecological.lat;
+forcing.lon=Ecological.lon;
 forcing.npp=Ecological.npp;
 forcing.npp(find(forcing.mask==1))=NaN;
 forcing.npp_ed=Ecological.npp_ed;
